@@ -18,11 +18,23 @@ router.post("/create", async (req, res) => {
     })
   }
 
-  res.send(result);
 });
 router.get("/", async (req, res) => {
-  let result = await DoctorService.getAllDoctors();
-  res.send(result);
+  try {
+    let result = await DoctorService.getAllDoctors();
+    if (result.success) {
+      return res.status(200).json(result)
+    }
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
 });
 router.get("/:id", async (req, res) => {
   let result = await DoctorService.getDoctorById();

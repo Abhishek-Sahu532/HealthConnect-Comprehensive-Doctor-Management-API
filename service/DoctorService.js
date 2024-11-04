@@ -83,7 +83,37 @@ exports.createDoctor = ({ name, email, specialization, weeklySchedule }) => {
         })
     })
 }
-exports.getAllDoctors = () => ({ msg: "test all" });
+exports.getAllDoctors = () => {
+    return new Promise((resolve, reject) => {
+        const queryToGetDoctorsDetails = 'select * from doctors'
+        pool.query(queryToGetDoctorsDetails, (err, result) => {
+            if (err) {
+                return reject(err)
+            }
+            if (result.length == 0) {
+                return reject({
+                    success: false,
+                    message: "Doctor not found for hospital."
+                })
+            }
+            let resultObject = {
+                success: true,
+            }
+            if (result.length > 0) {
+                resultObject['result'] = result.map((res) => ({
+                    id: res.id,
+                    name: res.name,
+                    email: res.email,
+                    specialization: res.specialization
+                }
+                ))
+                return resolve(resultObject)
+            }
+        })
+    })
+}
+
+
 exports.getDoctorById = () => ({ msg: "test" });
 exports.updateDoctorDetails = () => ({ msg: "test" });
 exports.deleteDoctor = () => ({ msg: "test" });
