@@ -3,7 +3,21 @@ const router = express.Router();
 const DoctorService = require("../service/DoctorService");
 
 router.post("/create", async (req, res) => {
-  let result = await DoctorService.createDoctor();
+  try {
+    const { name, email, specialization, weeklySchedule } = req.body
+    let result = await DoctorService.createDoctor({ name, email, specialization, weeklySchedule });
+
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+    return res.status(200).json(result)
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+
   res.send(result);
 });
 router.get("/", async (req, res) => {
