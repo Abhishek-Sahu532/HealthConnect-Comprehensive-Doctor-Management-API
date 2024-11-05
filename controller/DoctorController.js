@@ -37,9 +37,22 @@ router.get("/", async (req, res) => {
   }
 });
 router.get("/:id", async (req, res) => {
-  let result = await DoctorService.getDoctorById();
-  res.send(result);
+  try {
+    const { id } = req.params
+    let result = await DoctorService.getDoctorById({ id });
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+    return res.status(200).json(result)
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
 });
+
+
 router.post("/update/:id", async (req, res) => {
   let result = await DoctorService.updateDoctorDetails();
   res.send(result);

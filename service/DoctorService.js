@@ -150,7 +150,43 @@ exports.searchDoctorsBySpecialization = ({ specialization }) => {
     })
 }
 
-exports.getDoctorById = () => ({ msg: "tesnpt" });
+
+exports.getDoctorById = ({ id }) => {
+    return new Promise((resolve, reject) => {
+        if (!id) {
+            return reject({
+                success: false,
+                message: 'Id is missing'
+            })
+        }
+        const queryToGetResultByID = 'select * from doctors where id = ?'
+        pool.query(queryToGetResultByID, [id], (err, result) => {
+            if (err) {
+                console.log('err', err)
+                return reject(err)
+            }
+            if (result.length == 0) {
+                return reject({
+                    success: false,
+                    message: `Doctor not found with ID ${id}`
+                })
+            }
+            let resultObject = {
+                success: true
+            }
+            // console.log('result', result)
+            if (result.length > 0) {
+                resultObject['id'] = result[0].id
+                resultObject['name'] = result[0].name
+                resultObject['email'] = result[0].email
+                resultObject['specialization'] = result[0].specialization
+                resultObject['weeklySchedule'] = JSON.parse(result[0].weekly_schedule)
+                return resolve(resultObject)
+            }
+        })
+    })
+}
+
 exports.updateDoctorDetails = () => ({ msg: "test" });
 exports.deleteDoctor = () => ({ msg: "test" });
 exports.addDoctorLeave = () => ({ msg: "test" });
