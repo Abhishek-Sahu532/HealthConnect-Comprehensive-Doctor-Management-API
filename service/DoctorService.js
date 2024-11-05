@@ -113,11 +113,46 @@ exports.getAllDoctors = () => {
     })
 }
 
+exports.searchDoctorsBySpecialization = ({ specialization }) => {
+    return new Promise((resolve, reject) => {
+        if (!specialization) {
+            return reject({
+                success: false,
+                message: 'specialization missing'
+            })
+        }
 
-exports.getDoctorById = () => ({ msg: "test" });
+        const queryToGetSpecializationResult = 'select id, email, name, specialization from doctors where specialization = ?'
+
+        pool.query(queryToGetSpecializationResult, [specialization], (err, specialiezResult) => {
+            if (err) {
+                return reject(err)
+            }
+            let resultObject = { success: true }
+
+            //if the specialization category are not found in the database, it will return the doctors list
+            if (specialiezResult.length == 0) {
+                const queryToGetDoctorResult = 'select id, email, name, specialization from doctors'
+
+                pool.query(queryToGetDoctorResult, (err, result) => {
+                    if (err) {
+                        return reject(err)
+                    }
+                    resultObject['result'] = result
+                    return resolve(resultObject)
+                })
+            }
+            if (specialiezResult.length > 0) {
+                resultObject['result'] = specialiezResult
+                return resolve(resultObject)
+            }
+        })
+    })
+}
+
+exports.getDoctorById = () => ({ msg: "tesnpt" });
 exports.updateDoctorDetails = () => ({ msg: "test" });
 exports.deleteDoctor = () => ({ msg: "test" });
-exports.searchDoctorsBySpecialization = () => ({ msg: "test" });
 exports.addDoctorLeave = () => ({ msg: "test" });
 exports.deleteDoctorLeave = () => ({ msg: "test" });
 exports.getDoctorAvailability = () => ({ msg: "test" });

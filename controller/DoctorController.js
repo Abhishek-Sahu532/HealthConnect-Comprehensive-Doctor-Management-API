@@ -48,9 +48,24 @@ router.post("/delete/:id", async (req, res) => {
   let result = await DoctorService.deleteDoctor();
   res.send(result);
 });
-router.get("/search", async (req, res) => {
-  let result = await DoctorService.searchDoctorsBySpecialization();
-  res.send(result);
+router.get("/search/:specialization", async (req, res) => {
+  try {
+    const { specialization } = req.params
+    console.log(specialization)
+    let result = await DoctorService.searchDoctorsBySpecialization({ specialization });
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+    return res.status(200).json(result)
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+
+
 });
 router.post("/:id/leave", async (req, res) => {
   let result = await DoctorService.addDoctorLeave();
