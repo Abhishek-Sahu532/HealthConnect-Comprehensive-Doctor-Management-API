@@ -6,6 +6,7 @@ router.post("/:id/bookAppointments", async (req, res) => {
   let result = await AppointmentService.createAppointmentForDoctor();
   res.send(result);
 });
+
 router.get("/:id/appointments/upcoming", async (req, res) => {
   let result = await AppointmentService.getUpcomingAppointmentsForDoctor();
   res.send(result);

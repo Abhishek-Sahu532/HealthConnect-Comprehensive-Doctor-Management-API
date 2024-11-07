@@ -52,11 +52,25 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-
 router.post("/update/:id", async (req, res) => {
-  let result = await DoctorService.updateDoctorDetails();
-  res.send(result);
+  try {
+    const { id } = req.params
+    const { name, email, specialization, weeklySchedule } = req.body
+    let result = await DoctorService.updateDoctorDetails({ id, name, email, specialization, weeklySchedule });
+    if (!result.success) {
+      return res.status(400).json(result)
+    }
+    return res.status(200).json(result)
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+
 });
+
+
 router.post("/delete/:id", async (req, res) => {
   let result = await DoctorService.deleteDoctor();
   res.send(result);

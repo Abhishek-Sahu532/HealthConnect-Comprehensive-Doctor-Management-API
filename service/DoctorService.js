@@ -83,6 +83,8 @@ exports.createDoctor = ({ name, email, specialization, weeklySchedule }) => {
         })
     })
 }
+
+
 exports.getAllDoctors = () => {
     return new Promise((resolve, reject) => {
         const queryToGetDoctorsDetails = 'select * from doctors'
@@ -187,7 +189,106 @@ exports.getDoctorById = ({ id }) => {
     })
 }
 
-exports.updateDoctorDetails = () => ({ msg: "test" });
+exports.updateDoctorDetails = async ({ id, name, email, specialization, weeklySchedule }) => {
+    return new Promise(async (resolve, reject) => {
+        if (!id) {
+            return reject({
+                success: false,
+                message: 'ID is missing'
+            })
+        }
+
+        if ([name, email, specialization].some((field) => {
+            field == ''
+        })) {
+            return reject({
+                success: false,
+                message: 'Details are missing'
+            })
+        }
+        if (weeklySchedule.length == 0) {
+            return reject({
+                success: false,
+                message: 'Details are missing'
+            })
+        }
+
+        weeklySchedule.map((schedule) => {
+            if (schedule.dayOfWeek == '' || schedule.startTime == '' || schedule.endTime == '') {
+                return reject({
+                    success: false,
+                    message: 'A valid weekly schedule is required.'
+                })
+            }
+
+        })
+
+        const queryForDoctorDetails = 'select * from doctors where id = ? '
+        pool.query(queryForDoctorDetails, [id], (err, resultOfDoctorquery) => {
+            if (err) {
+                return reject(err)
+            }
+            //checking the doctor's id is presented in the database
+            console.log('resultOfDoctorquery', resultOfDoctorquery)
+            if (resultOfDoctorquery.length == 0) {
+                return reject({
+                    success: false,
+                    "message": `Doctor not found with ID:${id}`
+                })
+            }
+            if (resultOfDoctorquery.length > 0) {
+                //checking the email is not used by another doctor
+
+                if (resultOfDoctorquery[0].email !== email) {
+                    const queryToGetDetailsByEmail = 'select * from doctors where email = ?'
+                    pool.query(queryToGetDetailsByEmail, [email], (err, resultOfDoctorByEmail) => {
+                        if (err) {
+                            return reject(err)
+                        }
+                        console.log('resultOfDoctorByEmail', resultOfDoctorByEmail)
+                        if (resultOfDoctorByEmail.length > 0) {
+                            return reject({
+                                success: false,
+                                message: `The email id ${email} is used by another doctor`
+                            })
+                        }
+                    })
+                }
+
+                let newName = name ? name : resultOfDoctorquery[0].name
+                let newEmail = email ? email : resultOfDoctorquery[0].email
+                let newSpecialization = specialization ? specialization : resultOfDoctorquery[0].specialization
+                let newWeeklySchedule = weeklySchedule ? JSON.stringify(weeklySchedule) : resultOfDoctorquery[0].weeklySchedule
+
+                const queryToUpdateTheResponse = 'update doctors set email = ?,	name= ?, specialization = ?,	weekly_schedule = ? where id = ?'
+                pool.query(queryToUpdateTheResponse, [newEmail, newName, newSpecialization, newWeeklySchedule, id], (err, resultOfUpdateQuery) => {
+                    if (err) {
+                        console.log(err)
+                        return reject(err)
+                    }
+
+                    console.log('resultOfUpdateQuery', resultOfUpdateQuery)
+
+                    if (resultOfUpdateQuery.affectedRows > 0) {
+                        // const insertId = resultOfUpdateQuery.insertId
+                        let resultObject = {
+                            success: true,
+                            name: newName,
+                            email: newEmail,
+                            specialization: newSpecialization,
+                            weeklySchedule: JSON.parse(newWeeklySchedule)
+                        }
+                        return resolve(resultObject)
+                    }
+                })
+
+            }
+        })
+    })
+}
+
+
+
 exports.deleteDoctor = () => ({ msg: "test" });
 exports.addDoctorLeave = () => ({ msg: "test" });
 exports.deleteDoctorLeave = () => ({ msg: "test" });
