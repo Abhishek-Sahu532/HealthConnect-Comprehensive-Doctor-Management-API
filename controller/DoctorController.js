@@ -72,9 +72,22 @@ router.post("/update/:id", async (req, res) => {
 
 
 router.post("/delete/:id", async (req, res) => {
-  let result = await DoctorService.deleteDoctor();
-  res.send(result);
+  try {
+    const {id} = req.params
+    let result = await DoctorService.deleteDoctor({id});
+    if(!result.success){
+      return res.status(400).json(result)
+    }
+    return res.status(200).json(result)
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
 });
+
+
 router.get("/search/:specialization", async (req, res) => {
   try {
     const { specialization } = req.params
@@ -94,6 +107,8 @@ router.get("/search/:specialization", async (req, res) => {
 
 
 });
+
+
 router.post("/:id/leave", async (req, res) => {
   let result = await DoctorService.addDoctorLeave();
   res.send(result);

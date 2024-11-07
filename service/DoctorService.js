@@ -288,8 +288,42 @@ exports.updateDoctorDetails = async ({ id, name, email, specialization, weeklySc
 }
 
 
+exports.deleteDoctor = ({ id }) => {
+    return new Promise((resolve, reject) => {
+        const doctorQuery = 'select * from doctors where id = ?'
+        pool.query(doctorQuery, [id], (err, doctorResult) => {
+            if (err) {
+                return reject(err)
+            }
+            if (doctorResult.length == 0) {
+                return reject({
+                    success: false,
+                    message: `ID ${id} not found`
+                })
+            }
 
-exports.deleteDoctor = () => ({ msg: "test" });
+            const deleteQuery = 'delete from doctors where id = ?'
+
+            pool.query(deleteQuery, [id], (err, result) => {
+                if (err) {
+                    return reject(err)
+                }
+                console.log('result', result)
+                if (result.affectedRows > 0) {
+                    return resolve({
+                        success: true
+                    })
+                } else {
+                    return reject({
+                        success: false,
+                        message: 'Delete action failed'
+                    })
+                }
+            })
+        })
+    })
+}
+
 exports.addDoctorLeave = () => ({ msg: "test" });
 exports.deleteDoctorLeave = () => ({ msg: "test" });
 exports.getDoctorAvailability = () => ({ msg: "test" });
