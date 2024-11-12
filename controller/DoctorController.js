@@ -70,7 +70,6 @@ router.post("/update/:id", async (req, res) => {
 
 });
 
-
 router.post("/delete/:id", async (req, res) => {
   try {
     const {id} = req.params
@@ -86,7 +85,6 @@ router.post("/delete/:id", async (req, res) => {
     })
   }
 });
-
 
 router.get("/search/:specialization", async (req, res) => {
   try {
@@ -108,10 +106,22 @@ router.get("/search/:specialization", async (req, res) => {
 
 });
 
-
 router.post("/:id/leave", async (req, res) => {
-  let result = await DoctorService.addDoctorLeave();
-  res.send(result);
+  try {
+    const { id } = req.params
+    const { leaveDate, startTime, endTime } = req.body
+    let result = await DoctorService.addDoctorLeave({ id ,leaveDate, startTime, endTime});
+    if (!result?.success) {
+      return res.status(400).json(result)
+    }
+    return res.status(200).json(result)
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+
 });
 router.post("/:id/deleteLeave", async (req, res) => {
   let result = await DoctorService.deleteDoctorLeave();

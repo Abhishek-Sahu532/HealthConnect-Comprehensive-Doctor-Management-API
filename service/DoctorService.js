@@ -324,6 +324,111 @@ exports.deleteDoctor = ({ id }) => {
     })
 }
 
-exports.addDoctorLeave = () => ({ msg: "test" });
+exports.addDoctorLeave = async ({ id, leaveDate, startTime, endTime }) => {
+    return new Promise(async (resolve, reject) => {
+        if (!leaveDate && !startTime) {
+            return reject({
+                success: false,
+                message: 'Please provide the leave date & start time'
+            })
+        }
+        if (endTime && !startTime) {
+            return reject({
+                success: false,
+                message: 'Please provide the start time'
+
+            })
+        }
+
+        //checking the endTime is not before the startTime
+        let convertedStartTime = convertTo24Hour(startTime)
+        let convertedEndTime = convertTo24Hour(endTime)
+
+        if (convertedEndTime < convertedStartTime) {
+            return reject({
+                success: false,
+                message: 'End time is not earlier than the start time'
+            })
+        }
+
+        let todayDate = new Date();
+        let convertLeaveDate = new Date(leaveDate);
+        let Difference_In_Time = convertLeaveDate.getTime() - todayDate.getTime();
+
+        // Calculate the difference in days
+        let Difference_In_Days = Math.round(Difference_In_Time / (1000 * 3600 * 24));
+        //do not works on past dates
+        if (Difference_In_Days < 0) {
+            return reject({
+                success: false,
+                message: 'Please use future dates to apply an leave'
+            })
+        }
+        const doctorQuery = 'select * from doctors where id = ?'
+        await pool.query(doctorQuery, [id], (err, doctorResult) => {
+            if (err) {
+                return reject(err)
+            }
+            // console.log('doctorResult', doctorResult)
+            if (doctorResult.length == 0) {
+                return reject({
+                    success: false,
+                    message: `Doctor not found with the given ID ${id}`
+                })
+            }
+
+            if (doctorResult.length > 0) {
+                const leaveQuery = 'select * from doctor_leaves where doctor_id = ? and leave_date = ?'
+                pool.query(leaveQuery, [id, leaveDate], (err, leaveResult) => {
+                    if (err) {
+                        return reject(err)
+                    }
+                    let resultObject = {
+                        success: true,
+                    }
+                    // console.log('leaveResult', leaveResult)
+                    if (leaveResult.length == 0) {
+                        const insertLeaveQuery = 'INSERT INTO doctor_leaves (end_time, leave_date, start_time, doctor_id) values(?,?,?,?)'
+                        pool.query(insertLeaveQuery, [endTime, leaveDate, startTime, id], (err, InsertQueryResult) => {
+                            if (err) {
+                                return reject(err)
+                            }
+                            // console.log('InsertQueryResult', InsertQueryResult)
+                            if (InsertQueryResult.affectedRows > 0) {
+                                resultObject["Doctor Id"] = id
+                                resultObject["LeaveId"] = InsertQueryResult.insertId
+                                resultObject["LeaveDate"] = leaveDate
+                                resultObject["StartTime"] = startTime
+                                resultObject["EndTime"] =  endTime
+                                return resolve(resultObject)
+                            }
+                            // console.log('InsertQueryResult', InsertQueryResult)
+
+                        })
+                    }
+                    if (leaveResult.length > 0) {
+                        const updateQuery = 'update doctor_leaves set start_time = ?, end_time = ? where id = ?'
+                        pool.query(updateQuery, [startTime, endTime, leaveResult[0].id], (err, updateQueryResult) => {
+                            if (err) {
+                                return reject(err)
+                            }
+                            // console.log('updateQueryResult', updateQueryResult)
+                            if (updateQueryResult.affectedRows > 0) {
+                                resultObject["Doctor Id"] = id
+                                resultObject["LeaveId"] = leaveResult[0].id
+                                resultObject["LeaveDate"] = leaveDate
+                                resultObject["StartTime"] = startTime
+                                resultObject["EndTime"] = endTime
+                                return resolve(resultObject)
+
+                                // console.log('data updated')
+                            }
+                        })
+                    }
+                })
+            }
+        })
+    })
+}
 exports.deleteDoctorLeave = () => ({ msg: "test" });
 exports.getDoctorAvailability = () => ({ msg: "test" });
