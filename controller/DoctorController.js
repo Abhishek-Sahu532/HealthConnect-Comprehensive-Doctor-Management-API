@@ -123,10 +123,25 @@ router.post("/:id/leave", async (req, res) => {
   }
 
 });
+
 router.post("/:id/deleteLeave", async (req, res) => {
-  let result = await DoctorService.deleteDoctorLeave();
-  res.send(result);
-});
+  try {
+    const doctorId = req.params.id
+    const leaveDate = req.query.leaveDate
+    let result = await DoctorService.deleteDoctorLeave(doctorId, leaveDate);
+    // if (!result.success) {
+    //   return res.status(400).json(result)
+    // }
+    return res.status(200).json(result)
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+})
+
+
 router.get("/:id/availability", async (req, res) => {
   let result = await DoctorService.getDoctorAvailability();
   res.send(result);

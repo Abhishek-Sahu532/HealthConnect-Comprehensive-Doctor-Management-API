@@ -430,5 +430,49 @@ exports.addDoctorLeave = async ({ id, leaveDate, startTime, endTime }) => {
         })
     })
 }
-exports.deleteDoctorLeave = () => ({ msg: "test" });
+
+exports.deleteDoctorLeave = (doctorId, leaveDate) => {
+    return new Promise((resolve, reject) => {
+        const doctorQuery = 'select * from doctors where id = ?'
+        pool.query(doctorQuery, [doctorId], (err, doctorResult) => {
+            if (err) {
+                return reject(err)
+            }
+            if (doctorResult.length == 0) {
+                return reject({
+                    success: false,
+                    messgae: `Doctor not found of specified ID ${doctorId}`
+                })
+            }
+            if (doctorResult.length > 0) {
+                const leaveDateQuery = 'select * from doctor_leaves where doctor_id= ? and leave_date =?'
+
+                pool.query(leaveDateQuery, [doctorId, leaveDate], (err, leaveDateResult) => {
+                    if (err) {
+                        return result(err)
+                    }
+                    if (leaveDateResult.length == 0) {
+                        return reject({
+                            success: false,
+                            message: `Leave not found with the given date ${leaveDate} & ID ${doctorId}`
+                        })
+                    }
+                    const deleteQuery = 'delete from doctor_leaves where id = ?'
+                    pool.query(deleteQuery, [leaveDateResult[0].id], (err, deleteResult) => {
+                        if (err) {
+                            return reject(err)
+                        }
+                        if (deleteResult.affectedRows > 0) {
+                            return resolve({
+                                success: true
+                            })
+                        }
+                    })
+                })
+            }
+        })
+    })
+}
+
+
 exports.getDoctorAvailability = () => ({ msg: "test" });
